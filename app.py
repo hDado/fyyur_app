@@ -127,86 +127,44 @@ def index():
 def venues():
   # Done: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-  response_data = []
+  
+ #=============================== ! my mistake,my first submited code : 
+  venues = Venue.query.all()
 
-  try:
-        venue_locations = db.session.query(distinct(Venue.city), Venue.state).all() #using distinct like  set()
+  data = []   # declare an empty list for later append (final data input)
+  cities_states = set() 
 
-        today = datetime.now() #mark time for instant now as today
-
-        for location in venue_locations:
-            city = location[0]
-            state = location[1]
-
-            location_data = {"city": city, "state": state, "venues": []}
-
-            venues = Venue.query.filter_by(city=city, state=state).all()
-
-            for venue in venues:
-                venue_name = venue.name
-                venue_id = venue.id
-
-                upcoming_shows = (
-                    Show.query.filter_by(venue_id=venue_id)
-                    .filter(Show.start_time > today)
-                    .all()
-                )
-
-                venue_data = {
-                    "id": venue_id,
-                    "name": venue_name,
-                    "num_upcoming_shows": len(upcoming_shows),
-                }
-
-                location_data["venues"].append(venue_data)
-
-            response_data.append(location_data)
-
-  except:
-        db.session.rollback()
-        print("=================")
-        print(sys.exc_info())
-        flash("Something went wrong. Please try again.")
-        return render_template("pages/home.html")
-
-  finally:
-      return render_template("pages/venues.html", areas=response_data)
- #=============================== ! drop out code below and change the process ! code above was incrementing same venue when editing ....
-  # venues = Venue.query.all()
-
-  # data = []   # declare an empty list for later append (final data input)
-  # cities_states = set() 
-
-  # for venue in venues:
-  #   #print("venue ======", venue) #just to visualise the output
-  #   cities_states.add((venue.city, venue.state))  # Add data from venue model to the tuple | tuple will filter the data based on city/state
+  for venue in venues:
+    #print("venue ======", venue) #just to visualise the output
+    cities_states.add((venue.city, venue.state))  # Add data from venue model to the tuple | tuple will filter the data based on city/state
     
-  #   cities_states_list = list(cities_states)
-  #   cities_states_list.sort(key=itemgetter(1,0))     # Sorts on second column first (state), then by city usinf sort() with itemgetter key
-  #   # itemgetter() can be used to sort the list based on the value of the given key.
-  #   now = datetime.now()    
-  #   for c_s in cities_states_list: # boucle for pour passer sur toutes les localisations
-  #       # For this location, see if there are any venues there, and add if so
-  #       venues_list = []
-  #       for venue in venues: 
-  #           if (venue.city == c_s[0]) and (venue.state == c_s[1]):
-  #               venue_shows = Show.query.filter_by(venue_id=venue.id).all()
-  #               num_upcoming = 0
-  #               for show in venue_shows:
-  #                   if show.start_time > now:
-  #                       num_upcoming += 1
-  #               # fill the data into venues
-  #               venues_list.append({
-  #                   "id": venue.id,
-  #                   "name": venue.name,
-  #                   "num_upcoming_shows": num_upcoming
-  #               })
-  #        # adding the data to cITY STATE VENUE so the structure is like the dummy data presented
-  #       data.append({
-  #           "city": c_s[0],
-  #           "state": c_s[1],
-  #           "venues": venues_list #tree - nested list
-  #       })
+    cities_states_list = list(cities_states)
+    cities_states_list.sort(key=itemgetter(1,0))     # Sorts on second column first (state), then by city usinf sort() with itemgetter key
+    # itemgetter() can be used to sort the list based on the value of the given key.
+    now = datetime.now()    
+    for c_s in cities_states_list: # boucle for pour passer sur toutes les localisations
+        # For this location, see if there are any venues there, and add if so
+        venues_list = []
+        for venue in venues: 
+            if (venue.city == c_s[0]) and (venue.state == c_s[1]):
+                venue_shows = Show.query.filter_by(venue_id=venue.id).all()
+                num_upcoming = 0
+                for show in venue_shows:
+                    if show.start_time > now:
+                        num_upcoming += 1
+                # fill the data into venues
+                venues_list.append({
+                    "id": venue.id,
+                    "name": venue.name,
+                    "num_upcoming_shows": num_upcoming
+                })
+         # adding the data to cITY STATE VENUE so the structure is like the dummy data presented
+        data.append({
+            "city": c_s[0],
+            "state": c_s[1],
+            "venues": venues_list #tree - nested list
+        })
+        return render_template("pages/venues.html", areas=data)
 #==============================
   # data=[{
   #   "city": "San Francisco",
@@ -440,7 +398,7 @@ def create_venue_submission():
             city = form.city.data,
             state = form.state.data ,
             address = form.address.data ,
-              #   Strip anything from phone that isn't a number
+              #using regular expression to clean phone data. 
             phone = re.sub('\D', '', form.phone.data), 
             genres = form.genres.data  ,                
             seeking_talent = True if form.seeking_talent.data == 'Yes' else False ,
@@ -471,23 +429,10 @@ def create_venue_submission():
 
   #return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>', methods=['DELETE'])
-def delete_venue(venue_id):
-  # Testing didn't complete front : Complete this endpoint for taking a venue_id, and using
+#@app.route('/venues/<venue_id>', methods=['DELETE'])
+#def delete_venue():
+  # Testing -didn't complete front-: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-    try:
-        venue = Venue.query.get(venue_id)
-        db.session.delete(venue)
-        db.session.commit()
-        flash("Venue " + venue.name + " was deleted successfully!")
-    except:
-        db.session.rollback()
-        print(sys.exc_info())
-        flash("Venue was not deleted successfully.")
-    finally:
-        db.session.close()
-
-    return redirect(url_for("index"))
 
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
@@ -733,8 +678,8 @@ def create_artist_form():
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
   # called upon submitting the new artist listing form
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  # : insert form data as a new Venue record in the db, instead
+  # : modify data to be the data object returned from db insertion
     form = ArtistForm()  #declaring form from forms.py !!
   # 1 :
     
@@ -758,8 +703,8 @@ def create_artist_submission():
       flash('Artist ' + request.form['name'] + ' was successfully listed!')
     except Exception:
       db.session.rollback()
-      print("=================")
-      print(sys.exc_info())
+      #print("=================")
+      #print(sys.exc_info())
       flash('An error occurred. Artist ' + request.form.get("name") + ' could not be listed.')
     finally:
       # closing session 
@@ -776,6 +721,9 @@ def shows():
   # displays list of shows at /shows
   # done: replace with real venues data.
   shows = Show.query.order_by('start_time').all()
+  #print("========") 
+  #print(shows) #view repr on logs 
+
   data=[]
   for show in shows:
     data.append({
@@ -786,7 +734,7 @@ def shows():
       "artist_image_link": show.artist.image_link,
       "start_time": show.start_time})
   shows = Show.query.all()
-  data = []
+  data = [] #declare empty data list, append data once ready 
   for show in shows:
       show = {
           "venue_id": show.venue_id,
@@ -848,66 +796,65 @@ def create_shows():
   return render_template('forms/new_show.html', form=form)
 
 @app.route('/shows/create', methods=['POST'])
-def create_show_submission():
+def create_show_submission(): 
   # called to create new shows in the db, upon submitting new show listing form
   # Done: insert form data as a new Show record in the db, instead
-    errors = {"invalid_artist_id": False, "invalid_venue_id": False}
-
+    # declaring errors as global
+    error_artist = False
+    error_venue = False
     try:
+      # request artist data from forms. 
         artist_id = request.form.get("artist_id")
         venue_id = request.form.get("venue_id")
         start_time = request.form.get("start_time")
 
-        #  Check if artist is present in the db
-        found_artist = Artist.query.get(artist_id)
-        if found_artist is None:
-            errors["invalid_artist_id"] = True
+        #  Testing artist_id availlability in database model :
+        query_artist = Artist.query.get(artist_id)
+        if query_artist is None:
+            error_artist = True
 
-        #  Check if venue is present in the db
-        found_venue = Venue.query.get(venue_id)
-        if found_venue is None:
-            errors["invalid_venue_id"] = True
+
+        #  
+        query_venue = Venue.query.get(venue_id)
+        if query_venue is None:
+           error_venue = True
+          
 
         #  If the above tests pass, add the record to the DB as usual. Else, set the errors above.
-        if found_venue is not None and found_artist is not None:
+        if query_venue is not None and query_artist is not None:
             new_show = Show(
-                artist_id=found_artist.id,
-                venue_id=found_venue.id,
+                artist_id=query_artist.id,
+                venue_id=query_venue.id,
                 start_time=start_time,
             )
-            db.session.add(new_show)
+            db.session.add(new_show) #adding to show table
             db.session.commit()
-            flash(
-                "The show by "
-                + found_artist.name
-                + " has been successfully scheduled at the following venue: "
-                + found_venue.name
+            flash("show by"
+                + query_artist.name + " has been successfully scheduled at the following venue: "
+                + query_venue.name
             )
-    
+
+        
     except:
         print(sys.exc_info())
         db.session.rollback()
         flash("Something went wrong and the show was not created. Please try again.")
+        
 
     finally:
         db.session.close()
+    if error_artist == True:
+      flash("Artist id not found")
+    elif error_venue==True:
+      flash("Venue not found")      
 
-    if errors["invalid_artist_id"] is True:
-        flash(
-            "There is no artist with id "
-            + request.form.get("artist_id")
-            + " in our records"
-        )
-    elif errors["invalid_venue_id"] is True:
-        flash(
-            "There is no venue with id "
-            + request.form.get("venue_id")
-            + " in our records"
-        )
-
+    
+    
+    
     return render_template("pages/home.html")
-
     flash("Show was successfully listed!")
+
+    
   
   #return render_template('pages/home.html')
 
