@@ -126,27 +126,39 @@ def index():
 @app.route('/venues')
 def venues():
   # Done: replace with real venues data.
-  #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
+  #   num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
+    #i had to find a way and simplify my code as dummy data: because i was 
+    # city
+    # state
+    # venues{} 
+     #=============================== ! my mistake,my first submited code : 
   
- #=============================== ! my mistake,my first submited code : 
   venues = Venue.query.all()
 
   data = []   # declare an empty list for later append (final data input)
-  cities_states = set() 
+  cities_states = set()
 
   for venue in venues:
     #print("venue ======", venue) #just to visualise the output
-    cities_states.add((venue.city, venue.state))  # Add data from venue model to the tuple | tuple will filter the data based on city/state
+    cities_states.add((venue.city, venue.state)) 
     
+     # Add data from venue model to the tuple | set()deduplicate will filter the data based on city/state
+    #print(cities_states)
+   
+    #print("=======")
+    #print(type(cities_states_list)) #goog result
     cities_states_list = list(cities_states)
+    #print(type(cities_states_list))
     cities_states_list.sort(key=itemgetter(1,0))     # Sorts on second column first (state), then by city usinf sort() with itemgetter key
     # itemgetter() can be used to sort the list based on the value of the given key.
     now = datetime.now()    
-    for c_s in cities_states_list: # boucle for pour passer sur toutes les localisations
+  
+  for c_s in cities_states_list: # boucle for pour passer sur toutes les localisations
         # For this location, see if there are any venues there, and add if so
-        venues_list = []
-        for venue in venues: 
+          venues_list = []
+          for venue in venues: 
             if (venue.city == c_s[0]) and (venue.state == c_s[1]):
+                print(c_s[0] , " ", c_s[1])
                 venue_shows = Show.query.filter_by(venue_id=venue.id).all()
                 num_upcoming = 0
                 for show in venue_shows:
@@ -159,34 +171,45 @@ def venues():
                     "num_upcoming_shows": num_upcoming
                 })
          # adding the data to cITY STATE VENUE so the structure is like the dummy data presented
-        data.append({
+          data.append({
             "city": c_s[0],
             "state": c_s[1],
             "venues": venues_list #tree - nested list
         })
-        return render_template("pages/venues.html", areas=data)
+      
+  return render_template("pages/venues.html", areas=data)
+    
+    
+    # declare an empty list for later append (final data input)
+ 
+    # Add data from venue model to the tuple | tuple will filter the data based on city/state
+   
+
+    # print("***********")
+    # print(cities_states_list)
+
+    #sort a list of tuple
+    #cities_states_list.sort(key=itemgetter(1,0)) 
+    #sort a list of tuples by second  element "state" in List of tuple
+    # print("=============")
+    # print(cities_states_list.sort(key=lambda i: i[1])) # Sorts on second column first (state), then by city usinf sort() with itemgetter key
+    # itemgetter() can be used to sort the list based on the value of the given key.
+    
+              
+    # adding the data to cITY STATE VENUE so the structure is like the dummy data presented
+  
+
+ 
+   
+    # return render_template('pages/venues.html', areas=data)
+   
+         
+         
+        
+         
+
 #==============================
-  # data=[{
-  #   "city": "San Francisco",
-  #   "state": "CA",
-  #   "venues": [{
-  #     "id": 1,
-  #     "name": "The Musical Hop",
-  #     "num_upcoming_shows": 0,
-  #   }, {
-  #     "id": 3,
-  #     "name": "Park Square Live Music & Coffee",
-  #     "num_upcoming_shows": 1,
-  #   }]
-  # }, {
-  #   "city": "New York",
-  #   "state": "NY",
-  #   "venues": [{
-  #     "id": 2,
-  #     "name": "The Dueling Pianos Bar",
-  #     "num_upcoming_shows": 0,
-  #   }]
-  # }]
+ 
   #return render_template('pages/venues.html', areas=data);  #rendering the view
 #=======--------------- dummy data
   # data=[{
@@ -499,7 +522,7 @@ def show_artist(artist_id): #done
 
   for show in shows:
     data = {
-      'venue_id': show.venue_id,
+      'venue_id': show.venue.id,
       'venue_name': show.venue.name,
       'venue_image_link': show.venue.image_link,
       'start_time': format_datetime(str(show.start_time))
@@ -544,6 +567,7 @@ def edit_artist(artist_id):
       form.website_link.data = artist.website_link
       form.seeking_venue.data = artist.seeking_venue
       form.seeking_description.data = artist.seeking_description
+     
 
     return render_template('forms/edit_artist.html', form=form, artist=artist)
 
@@ -562,7 +586,7 @@ def edit_artist(artist_id):
   #   "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
   # }
   # !!!done : populate form with fields from artist with ID <artist_id>
-    return render_template('forms/edit_artist.html', form=form, artist=artist)
+    #return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
@@ -573,15 +597,19 @@ def edit_artist_submission(artist_id):
     artist = Artist.query.get(artist_id)
     
   
-    artist.name = form.name.data
-    artist.phone = form.phone.data
-    artist.state = form.state.data
-    artist.city = form.city.data
-    artist.genres = form.genres.data
-    artist.image_link = form.image_link.data
-    artist.facebook_link = form.facebook_link.data
+    artist.name = request.form.get("name")
+    artist.phone = request.form.get("phone")
+    artist.state = request.form.get("state")
+    artist.city = request.form.get("city")
+    artist.genres = request.form.getlist("genres")
+    artist.image_link = request.form.get("image_link")
+    artist.website_link = request.form.get("website_link")
+    artist.facebook_link = request.form.get("facebook_link")
+    artist.seeking_venue = request.form.get("seeking_venue") #
 
+    
     db.session.commit()
+    
     flash('The Artist ' + request.form.get("name") + ' has been successfully updated!')
   except:
     db.session.rollback()
@@ -589,6 +617,7 @@ def edit_artist_submission(artist_id):
     flash('An Error has occured and the update unsucessful')
   finally:
     db.session.close()
+  #return render_template("pages/show_artist.html" , artist=artist_id )
   return redirect(url_for('show_artist', artist_id=artist_id))
 
   #return redirect(url_for('show_artist', artist_id=artist_id))
@@ -597,7 +626,7 @@ def edit_artist_submission(artist_id):
 def edit_venue(venue_id):
   
   form = VenueForm()
-  venue = Venue.query.get(venue_id)
+  venue = Venue.query.get(venue_id) #getting the data that match venue_id opened in link <route> 
   # populating form by default when opening route url in browser :
   if venue: 
     form.name.data = venue.name  #name in form (user input) == name in db model ! 
@@ -627,7 +656,7 @@ def edit_venue(venue_id):
   #   "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
   #   "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
   # }
-  # TODO: populate form with values from venue with ID <venue_id>
+  # done: populate form with values from venue with ID <venue_id>
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
